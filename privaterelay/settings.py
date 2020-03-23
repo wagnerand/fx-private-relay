@@ -16,7 +16,7 @@ from decouple import config
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
 
-import django_heroku
+import dj_database_url
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -57,6 +57,9 @@ CSP_IMG_SRC = (
 REFERRER_POLICY = 'strict-origin-when-cross-origin'
 
 ALLOWED_HOSTS = []
+EXTRA_ALLOWED_HOST = config('DJANGO_EXTRA_ALLOWED_HOST', None, cast=str)
+if EXTRA_ALLOWED_HOST:
+    ALLOWED_HOSTS.append(EXTRA_ALLOWED_HOST)
 
 
 # Get our backing resource configs to check if we should install the app
@@ -149,10 +152,9 @@ WSGI_APPLICATION = 'privaterelay.wsgi.application'
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
+    'default': dj_database_url.config(
+        default="sqlite:///%s" % os.path.join(BASE_DIR, 'db.sqlite3')
+    )
 }
 
 
@@ -251,5 +253,3 @@ sentry_sdk.init(
     dsn=config('SENTRY_DSN', None),
     integrations=[DjangoIntegration()],
 )
-
-django_heroku.settings(locals(), logging=config('ON_HEROKU', False, cast=bool))
