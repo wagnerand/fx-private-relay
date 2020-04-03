@@ -81,6 +81,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'dockerflow.django',
+    'django_statsd',
 
     'allauth',
     'allauth.account',
@@ -112,6 +113,7 @@ def download_xpis(headers, path, url):
 WHITENOISE_ADD_HEADERS_FUNCTION = download_xpis
 
 MIDDLEWARE = [
+    'django_statsd.middleware.StatsdMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -124,8 +126,8 @@ MIDDLEWARE = [
     'csp.middleware.CSPMiddleware',
     'django_referrer_policy.middleware.ReferrerPolicyMiddleware',
     'dockerflow.django.middleware.DockerflowMiddleware',
-
     'privaterelay.middleware.FxAToRequest',
+    'django_statsd.middleware.StatsdMiddlewareTimer',
 ]
 
 ROOT_URLCONF = 'privaterelay.urls'
@@ -256,5 +258,9 @@ sentry_sdk.init(
     dsn=config('SENTRY_DSN', None),
     integrations=[DjangoIntegration()],
 )
+
+STATSD_HOST = config('DJANGO_STATSD_HOST', '127.0.0.1')
+STATSD_PORT = config('DJANGO_STATSD_PORT', '8125')
+STATSD_PREFIX = config('DJANGO_STATSD_PREFIX', 'fx-private-relay')
 
 django_heroku.settings(locals(), logging=config('ON_HEROKU', False, cast=bool))
